@@ -9,7 +9,7 @@ const winston = require('winston');
 const cacheDirectory = 'replays';
 const dataUrl = 'http://saved-games-alpha.s3-website-us-east-1.amazonaws.com/';
 const playUrl = 'https://play.prismata.net/?r=';
-const codeRegexp = /[a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5}/g;
+const codeRegexp = /(?:^|\s)[a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5}(?:\s|$)/g;
 
 function loadCachedData(code) {
     return new Promise(function (resolve, reject) {
@@ -120,7 +120,7 @@ module.exports.handleMessage = function handleMessage(message) {
         return;
     }
 
-    const code = matches[0];
+    const code = matches[0].trim();
 
     const dataPromise = getData(code);
 
