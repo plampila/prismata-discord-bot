@@ -1,0 +1,19 @@
+{
+  "name": "prismata-discord-dbot",
+  "version": "0.0.1",
+  "description": "Prismata Discord Bot",
+  "main": "bot.js",
+  "dependencies": {
+    "discord.js": "^11.3.2",
+    "toml": "^2.3.3",
+    "winston": "^2.4.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pekka Lampila",
+  "email": "pekka.lampila@iki.fi",
+  "license": "UNLICENSED",
+  "private": true
+}
