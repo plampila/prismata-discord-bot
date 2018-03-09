@@ -10,6 +10,12 @@ const cacheDirectory = 'replays';
 const dataUrl = 'http://saved-games-alpha.s3-website-us-east-1.amazonaws.com/';
 const playUrl = 'https://play.prismata.net/?r=';
 const codeRegexp = /(?:^|\s)[a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5}(?:\s|$)/g;
+const gameTypeFormats = {
+    200: "Ranked",
+    201: "Versus",
+    204: "Casual",
+};
+const romanNumeral = [null, 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IIX', 'IX'];
 
 function loadCachedData(code) {
     return new Promise(function (resolve, reject) {
@@ -68,9 +74,6 @@ function getData(code) {
                         }
 
                         var out = fs.createWriteStream(path.join(cacheDirectory, code + '.json.gz'))
-                        .on('open', function () {
-                            winston.debug('Opened.');
-                        })
                         .on('close', function () {
                             winston.debug('Replay saved to cache: ' + code);
                         })
@@ -90,6 +93,62 @@ function getData(code) {
     });
 }
 
+function extractTimeControl(data) {
+    if (data.timeInfo.playerTime[0].useClocks === false) {
+        return 0;
+    }
+
+    var time = data.timeInfo.playerTime[0].initial;
+
+    for (var i = 0; i < 2; i++) {
+        if (data.timeInfo.playerTime[i].initial !== time ||
+            data.timeInfo.playerTime[i].bank !== time ||
+            data.timeInfo.playerTime[i].increment !== time) {
+            return null;
+        }
+    }
+
+    return time;
+}
+
+function formatRating(tier, tierPercent, rating) {
+    if (tier >= 10) {
+        return Math.round(rating);
+    } else if (tier < 1 || tier === 1 && tierPercent === 0) {
+        return '-';
+    } else {
+        return 'Tier ' + romanNumeral[tier];
+    }
+}
+
+function extractGameData(data) {
+    // TODO: detect custom sets
+
+    try {
+        return {
+            p1: {
+                name: data.playerInfo[0].displayName,
+                rating: formatRating(data.ratingInfo.initialRatings[0].tier,
+                    data.ratingInfo.initialRatings[0].tierPercent,
+                    data.ratingInfo.initialRatings[0].displayRating),
+            },
+            p2: {
+                name: data.playerInfo[1].displayName,
+                rating: formatRating(data.ratingInfo.initialRatings[1].tier,
+                    data.ratingInfo.initialRatings[1].tierPercent,
+                    data.ratingInfo.initialRatings[1].displayRating),
+            },
+            gameType: gameTypeFormats.hasOwnProperty(data.format) ? gameTypeFormats[data.format] : "Unknown",
+            timeControl: extractTimeControl(data),
+            randomUnits: data.deckInfo.randomizer[0],
+            startTime: data.startTime,
+        };
+    } catch (e) {
+        winston.warn('Failed to parse game data.', e);
+        return null;
+    }
+}
+
 function createEmbed(code, data, e) {
     var embed = new Discord.RichEmbed();
     embed.setColor('BLUE');
@@ -102,10 +161,28 @@ function createEmbed(code, data, e) {
             embed.setDescription('...');
         }
     } else {
-        embed.addField('P1 Name', 'P1 Rank', true);
-        embed.addField('P2 Name', 'P2 Rank', true);
-        embed.addField('Type, Time Setting, Random Set Size', 'Random Set Units');
-        embed.setFooter('Played on Date');
+        var d = extractGameData(data);
+        if (!d) {
+            embed.setDescription('Failed to parse game data.');
+        } else {
+            embed.addField(d.p1.name, d.p1.rating, true);
+            embed.addField(d.p2.name, d.p2.rating, true);
+            var desc = d.gameType;
+            if (d.timeControl === 0) {
+                desc += ', No Timelimit';
+            } else if (d.timeControl > 0) {
+                desc += ', ' + d.timeControl + 's';
+            } else {
+                desc += ', Custom Timelimit';
+            }
+            if (d.randomUnits.length === 0) {
+                desc += ', Base Set Only';
+            } else {
+                desc += ', Base+' + d.randomUnits.length;
+            }
+            embed.addField(desc, d.randomUnits.join(', '));
+            embed.setFooter('Played ' + d.startTime);
+        }
     }
     return embed;
 }
@@ -131,7 +208,7 @@ module.exports.handleMessage = function handleMessage(message) {
                     message.edit({ embed: createEmbed(code, data) });
                 })
                 .catch(function (e) {
-                    message.edit({ embed: createEmbed(code, data, e) });
+                    message.edit({ embed: createEmbed(code, null, e) });
                 });
         })
         .catch(winston.error);
