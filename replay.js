@@ -1,3 +1,4 @@
+const Discord = require('discord.js');
 const fs = require('fs');
 const http = require('http');
 const path = require('path');
@@ -7,6 +8,7 @@ const winston = require('winston');
 
 const cacheDirectory = 'replays';
 const dataUrl = 'http://saved-games-alpha.s3-website-us-east-1.amazonaws.com/';
+const playUrl = 'https://play.prismata.net/?r=';
 const codeRegexp = /[a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5}/g;
 
 function loadCachedData(code) {
@@ -88,11 +90,49 @@ function getData(code) {
     });
 }
 
+function createEmbed(code, data, e) {
+    var embed = new Discord.RichEmbed();
+    embed.setColor('BLUE');
+    embed.setTitle(code);
+    embed.setURL(playUrl + code);
+    if (!data) {
+        if (e) {
+            embed.setDescription('Error: ' + e);
+        } else {
+            embed.setDescription('...');
+        }
+    } else {
+        embed.addField('P1 Name', 'P1 Rank', true);
+        embed.addField('P2 Name', 'P2 Rank', true);
+        embed.addField('Type, Time Setting, Random Set Size', 'Random Set Units');
+        embed.setFooter('Played on Date');
+    }
+    return embed;
+}
+
 module.exports.handleMessage = function handleMessage(message) {
     var matches = message.content.match(codeRegexp);
     if (!matches) {
         return;
     }
+    if (matches.length > 1) {
+        winston.debug('Too many replay codes, ignoring message.');
+        return;
+    }
 
-    message.reply('Found ' + matches.length + ' replay codes.');
+    const code = matches[0];
+
+    const dataPromise = getData(code);
+
+    message.channel.send({ embed: createEmbed(code, null) })
+        .then(function (message) {
+            dataPromise
+                .then(function (data) {
+                    message.edit({ embed: createEmbed(code, data) });
+                })
+                .catch(function (e) {
+                    message.edit({ embed: createEmbed(code, data, e) });
+                });
+        })
+        .catch(winston.error);
 };
