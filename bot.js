@@ -3,6 +3,8 @@ const fs = require('fs');
 const toml = require('toml');
 const winston = require('winston');
 
+const replay = require('./replay');
+
 winston.level = 'debug';
 
 winston.info('Launching...');
@@ -22,7 +24,10 @@ client.on('message', message => {
 
     if (message.content === '!ping') {
         message.reply('pong');
+        return;
     }
+
+    replay.handleMessage(message);
 });
 
 client.on('reconnecting', () => {
