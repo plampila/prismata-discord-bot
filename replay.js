@@ -13,6 +13,7 @@ const codeRegexp = /(?:^|\s)[a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5}(?:\s|$)/g;
 const gameTypeFormats = {
     200: "Ranked",
     201: "Versus",
+    203: "Event",
     204: "Casual",
 };
 const romanNumeral = [null, 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IIX', 'IX'];
@@ -122,8 +123,6 @@ function formatRating(tier, tierPercent, rating) {
 }
 
 function extractGameData(data) {
-    // TODO: detect custom sets
-
     try {
         return {
             p1: {
@@ -141,7 +140,7 @@ function extractGameData(data) {
             gameType: gameTypeFormats.hasOwnProperty(data.format) ? gameTypeFormats[data.format] : "Unknown",
             timeControl: extractTimeControl(data),
             randomUnits: data.deckInfo.randomizer[0],
-            startTime: data.startTime,
+            startTime: new Date(data.startTime * 1000),
         };
     } catch (e) {
         winston.warn('Failed to parse game data.', e);
@@ -181,7 +180,7 @@ function createEmbed(code, data, e) {
                 desc += ', Base+' + d.randomUnits.length;
             }
             embed.addField(desc, d.randomUnits.join(', '));
-            embed.setFooter('Played ' + d.startTime);
+            embed.setFooter(d.startTime.toISOString().replace('T', ' ').replace('\..+', ''));
         }
     }
     return embed;
