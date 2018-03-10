@@ -2,4 +2,5 @@
 token="<bot token>"
 
 [replay]
+max_codes_per_message=3
 ignore_same_code_time=60
