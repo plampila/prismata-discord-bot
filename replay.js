@@ -1,3 +1,4 @@
+const assert = require('assert');
 const Discord = require('discord.js');
 const fs = require('fs');
 const http = require('http');
@@ -12,7 +13,8 @@ const config = toml.parse(fs.readFileSync('bot.toml'));
 const cacheDirectory = 'replays';
 const dataUrl = 'http://saved-games-alpha.s3-website-us-east-1.amazonaws.com/';
 const playUrl = 'https://play.prismata.net/?r=';
-const codeRegexp = /(?:^|\s)([a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5})(?:\s|$)/g;
+const codeRegexp = /^[a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5}$/;
+const codeSearchRegexp = /(?:^|\s)([a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5})(?:\s|$)/g;
 const gameTypeFormats = {
     200: "Ranked",
     201: "Versus",
@@ -28,6 +30,8 @@ const errorMessage = {
 };
 
 function loadCachedData(code) {
+    assert(code.match(codeRegexp));
+
     return new Promise(function (resolve, reject) {
         var readData = '';
         fs.createReadStream(path.join(cacheDirectory, code + '.json.gz'))
@@ -52,12 +56,14 @@ function loadCachedData(code) {
 }
 
 function getData(code) {
+    assert(code.match(codeRegexp));
+
     return new Promise(function (resolve, reject) {
         loadCachedData(code).then(function (data) {
             resolve(data);
         }).catch(function (e) {
             winston.info('Downloading replay data: ' + code);
-            var request = http.get(dataUrl + code + '.json.gz', function (response) {
+            var request = http.get(dataUrl + encodeURIComponent(code) + '.json.gz', function (response) {
                 if (!response || !response.statusCode) {
                     reject({ type: 'NetworkError', message: 'No response object.' });
                     return;
@@ -166,10 +172,12 @@ function extractGameData(data) {
 }
 
 function createEmbed(code, data, errorMessage) {
+    assert(code.match(codeRegexp));
+
     var embed = new Discord.RichEmbed();
     embed.setColor('BLUE');
     embed.setTitle(code);
-    embed.setURL(playUrl + code);
+    embed.setURL(playUrl + encodeURIComponent(code));
     if (errorMessage) {
         embed.setDescription(errorMessage);
     } else if (!data) {
@@ -207,11 +215,11 @@ function createEmbed(code, data, errorMessage) {
 
 module.exports.handleMessage = function handleMessage(message) {
     var codes = [];
-    var match = codeRegexp.exec(message);
+    var match = codeSearchRegexp.exec(message);
     while (match) {
         codes.push(match[1]);
-        codeRegexp.lastIndex--;
-        match = codeRegexp.exec(message);
+        codeSearchRegexp.lastIndex--;
+        match = codeSearchRegexp.exec(message);
     }
     codes = Array.from(new Set(codes));
     if (!codes) {
@@ -232,9 +240,14 @@ module.exports.handleMessage = function handleMessage(message) {
                         message.edit({ embed: createEmbed(code, data) });
                     })
                     .catch(function (e) {
-                        winston.error("Failed to get replay data (" + code + "), " + e.type + ":", e.message);
-                        message.edit({ embed: createEmbed(code, null,
-                            errorMessage[e.type] ? errorMessage[e.type] : "Unknown Error") });
+                        if (e.type) {
+                            winston.error("Failed to get replay data (" + code + "), " + e.type + ":", e.message);
+                            message.edit({ embed: createEmbed(code, null,
+                                errorMessage[e.type] ? errorMessage[e.type] : "Unknown Error") });
+                        } else {
+                            winston.error("Failed to get replay data (" + code + "):", e);
+                            message.edit({ embed: createEmbed(code, null, "Unknown Error") });
+                        }
                     });
             })
             .catch(winston.error);
