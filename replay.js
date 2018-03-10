@@ -1,10 +1,13 @@
 const Discord = require('discord.js');
 const fs = require('fs');
 const http = require('http');
-const path = require('path');
-const zlib = require('zlib');
 const PassThrough = require('stream').PassThrough;
+const path = require('path');
+const toml = require('toml');
 const winston = require('winston');
+const zlib = require('zlib');
+
+const config = toml.parse(fs.readFileSync('bot.toml'));
 
 const cacheDirectory = 'replays';
 const dataUrl = 'http://saved-games-alpha.s3-website-us-east-1.amazonaws.com/';
@@ -207,26 +210,28 @@ module.exports.handleMessage = function handleMessage(message) {
     if (!matches) {
         return;
     }
-    if (matches.length > 1) {
+    if (matches.length > config.replay.max_codes_per_message) {
         winston.debug('Too many replay codes, ignoring message.');
         return;
     }
 
-    const code = matches[0].trim();
+    matches.forEach(function (code) {
+        code = code.trim();
 
-    const dataPromise = getData(code);
+        const dataPromise = getData(code);
 
-    message.channel.send({ embed: createEmbed(code, null) })
-        .then(function (message) {
-            dataPromise
-                .then(function (data) {
-                    message.edit({ embed: createEmbed(code, data) });
-                })
-                .catch(function (e) {
-                    winston.error("Failed to get replay data (" + code + "), " + e.type + ":", e.message);
-                    message.edit({ embed: createEmbed(code, null,
-                        errorMessage[e.type] ? errorMessage[e.type] : "Unknown Error") });
-                });
-        })
-        .catch(winston.error);
+        message.channel.send({ embed: createEmbed(code, null) })
+            .then(function (message) {
+                dataPromise
+                    .then(function (data) {
+                        message.edit({ embed: createEmbed(code, data) });
+                    })
+                    .catch(function (e) {
+                        winston.error("Failed to get replay data (" + code + "), " + e.type + ":", e.message);
+                        message.edit({ embed: createEmbed(code, null,
+                            errorMessage[e.type] ? errorMessage[e.type] : "Unknown Error") });
+                    });
+            })
+            .catch(winston.error);
+    });
 };
