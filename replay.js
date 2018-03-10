@@ -18,6 +18,12 @@ const gameTypeFormats = {
 };
 const romanNumeral = [null, 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IIX', 'IX'];
 
+const errorMessage = {
+    'NetworkError': 'Failed to fetch replay data.',
+    'NotFound': 'Replay data not found.',
+    'InvalidData': 'Failed to parse replay data.',
+};
+
 function loadCachedData(code) {
     return new Promise(function (resolve, reject) {
         var readData = '';
@@ -50,11 +56,15 @@ function getData(code) {
             winston.info('Downloading replay data: ' + code);
             var request = http.get(dataUrl + code + '.json.gz', function (response) {
                 if (!response || !response.statusCode) {
-                    reject('Failed to fetch replay data. No response object.');
+                    reject({ type: 'NetworkError', message: 'No response object.' });
                     return;
                 }
                 if (response.statusCode < 200 || response.statusCode >= 300) {
-                    reject('Unexpected HTTP status code: ' + response.statusCode);
+                    if (response.statusCode === 404) {
+                        reject({ type: 'NotFound', message: 'Unexpected HTTP status code: ' + response.statusCode });
+                    } else {
+                        reject({ type: 'NetworkError', message: 'Unexpected HTTP status code: ' + response.statusCode });
+                    }
                     return;
                 }
 
@@ -70,7 +80,7 @@ function getData(code) {
                         try {
                             resolve(JSON.parse(readData));
                         } catch (e) {
-                            reject(e);
+                            reject({ type: 'InvalidData', message: e });
                             return;
                         }
 
@@ -84,11 +94,11 @@ function getData(code) {
                         passThrough.pipe(out);
                     })
                     .on('error', function (e) {
-                        reject(e);
+                        reject({ type: 'InvalidData', message: e });
                     });
             })
             .on('error', function (e) {
-                reject('Failed to fetch replay data: ' + e);
+                reject({ type: 'NetworkError', message: e });
             });
         });
     });
@@ -147,26 +157,24 @@ function extractGameData(data) {
             startTime: new Date(data.startTime * 1000),
         };
     } catch (e) {
-        winston.warn('Failed to parse game data.', e);
+        winston.error('Failed to parse replay data.', e);
         return null;
     }
 }
 
-function createEmbed(code, data, e) {
+function createEmbed(code, data, errorMessage) {
     var embed = new Discord.RichEmbed();
     embed.setColor('BLUE');
     embed.setTitle(code);
     embed.setURL(playUrl + code);
-    if (!data) {
-        if (e) {
-            embed.setDescription('Error: ' + e);
-        } else {
-            embed.setDescription('...');
-        }
+    if (errorMessage) {
+        embed.setDescription(errorMessage);
+    } else if (!data) {
+        embed.setDescription('...');
     } else {
         var d = extractGameData(data);
         if (!d) {
-            embed.setDescription('Failed to parse game data.');
+            embed.setDescription('Failed to parse replay data.');
         } else {
             embed.addField(d.p1.name, d.p1.rating, true);
             embed.addField(d.p2.name, d.p2.rating, true);
@@ -215,7 +223,9 @@ module.exports.handleMessage = function handleMessage(message) {
                     message.edit({ embed: createEmbed(code, data) });
                 })
                 .catch(function (e) {
-                    message.edit({ embed: createEmbed(code, null, e) });
+                    winston.error("Failed to get replay data (" + code + "), " + e.type + ":", e.message);
+                    message.edit({ embed: createEmbed(code, null,
+                        errorMessage[e.type] ? errorMessage[e.type] : "Unknown Error") });
                 });
         })
         .catch(winston.error);
