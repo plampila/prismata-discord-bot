@@ -21,6 +21,10 @@ client.on('message', message => {
     if (message.system || message.author.bot) {
         return;
     }
+    if (message.channel instanceof Discord.DMChannel) {
+        winston.info('Private message from ' + message.author.tag + ': ' + message.content);
+        return;
+    }
 
     if (message.content === '!ping') {
         message.reply('pong');
