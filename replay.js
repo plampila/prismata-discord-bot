@@ -213,6 +213,7 @@ module.exports.handleMessage = function handleMessage(message) {
         codeRegexp.lastIndex--;
         match = codeRegexp.exec(message);
     }
+    codes = Array.from(new Set(codes));
     if (!codes) {
         return;
     }
