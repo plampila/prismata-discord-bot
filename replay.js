@@ -142,6 +142,7 @@ function extractGameData(data) {
             },
             gameType: gameTypeFormats.hasOwnProperty(data.format) ? gameTypeFormats[data.format] : "Unknown",
             timeControl: extractTimeControl(data),
+            hasBaseSet: data.deckInfo.base[0].length > 0,
             randomUnits: data.deckInfo.randomizer[0],
             startTime: new Date(data.startTime * 1000),
         };
@@ -177,10 +178,14 @@ function createEmbed(code, data, e) {
             } else {
                 desc += ', Custom Timelimit';
             }
-            if (d.randomUnits.length === 0) {
-                desc += ', Base Set Only';
+            if (!d.hasBaseSet) {
+                desc += ', Custom Set';
             } else {
-                desc += ', Base+' + d.randomUnits.length;
+                if(d.randomUnits.length === 0) {
+                    desc += ', Base Set Only';
+                } else {
+                    desc += ', Base+' + d.randomUnits.length;
+                }
             }
             embed.addField(desc, d.randomUnits.join(', '));
             embed.setFooter(d.startTime.toISOString().replace('T', ' ').replace('\..+', ''));
