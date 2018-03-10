@@ -1,2 +1,5 @@
 [login]
 token="<bot token>"
+
+[replay]
+ignore_same_code_time=60

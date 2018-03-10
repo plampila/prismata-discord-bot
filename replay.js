@@ -29,6 +29,8 @@ const errorMessage = {
     'InvalidData': 'Failed to parse replay data.',
 };
 
+var channelIgnoredCodes = {};
+
 function loadCachedData(code) {
     assert(code.match(codeRegexp));
 
@@ -213,6 +215,34 @@ function createEmbed(code, data, errorMessage) {
     return embed;
 }
 
+function filterIgnored(channel, codes) {
+    const cutoffTime = Date.now() - config.replay.ignore_same_code_time * 1000;
+
+    if (!channelIgnoredCodes.hasOwnProperty(channel)) {
+        channelIgnoredCodes[channel] = {};
+    }
+    Object.keys(channelIgnoredCodes[channel]).forEach(function (code) {
+        if (channelIgnoredCodes[channel][code] < cutoffTime) {
+            delete channelIgnoredCodes[channel][code];
+        }
+    });
+
+    return codes.filter(function (code) {
+        return !channelIgnoredCodes[channel].hasOwnProperty(code);
+    });
+}
+
+function updateIgnored(channel, codes) {
+    const time = Date.now();
+
+    if (!channelIgnoredCodes.hasOwnProperty(channel)) {
+        channelIgnoredCodes[channel] = {};
+    }
+    codes.forEach(function (code) {
+        channelIgnoredCodes[channel][code] = time;
+    });
+}
+
 module.exports.handleMessage = function handleMessage(message) {
     var codes = [];
     var match = codeSearchRegexp.exec(message);
@@ -221,7 +251,7 @@ module.exports.handleMessage = function handleMessage(message) {
         codeSearchRegexp.lastIndex--;
         match = codeSearchRegexp.exec(message);
     }
-    codes = Array.from(new Set(codes));
+    codes = filterIgnored(message.channel, Array.from(new Set(codes)));
     if (!codes) {
         return;
     }
@@ -229,6 +259,7 @@ module.exports.handleMessage = function handleMessage(message) {
         winston.debug('Too many replay codes, ignoring message.');
         return;
     }
+    updateIgnored(message.channel, codes);
 
     codes.forEach(function (code) {
         const dataPromise = getData(code);
