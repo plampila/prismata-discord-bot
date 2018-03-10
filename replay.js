@@ -95,13 +95,16 @@ function getData(code) {
 }
 
 function extractTimeControl(data) {
-    if (data.timeInfo.playerTime[0].useClocks === false) {
+    if (data.timeInfo.useClocks === false) {
         return 0;
     }
 
     var time = data.timeInfo.playerTime[0].initial;
 
     for (var i = 0; i < 2; i++) {
+        if (data.playerInfo[i].bot) {
+            continue;
+        }
         if (data.timeInfo.playerTime[i].initial !== time ||
             data.timeInfo.playerTime[i].bank !== time ||
             data.timeInfo.playerTime[i].increment !== time) {
