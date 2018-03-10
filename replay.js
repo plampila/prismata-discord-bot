@@ -12,7 +12,7 @@ const config = toml.parse(fs.readFileSync('bot.toml'));
 const cacheDirectory = 'replays';
 const dataUrl = 'http://saved-games-alpha.s3-website-us-east-1.amazonaws.com/';
 const playUrl = 'https://play.prismata.net/?r=';
-const codeRegexp = /(?:^|\s)[a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5}(?:\s|$)/g;
+const codeRegexp = /(?:^|\s)([a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5})(?:\s|$)/g;
 const gameTypeFormats = {
     200: "Ranked",
     201: "Versus",
@@ -206,18 +206,22 @@ function createEmbed(code, data, errorMessage) {
 }
 
 module.exports.handleMessage = function handleMessage(message) {
-    var matches = message.content.match(codeRegexp);
-    if (!matches) {
+    var codes = [];
+    var match = codeRegexp.exec(message);
+    while (match) {
+        codes.push(match[1]);
+        codeRegexp.lastIndex--;
+        match = codeRegexp.exec(message);
+    }
+    if (!codes) {
         return;
     }
-    if (matches.length > config.replay.max_codes_per_message) {
+    if (codes.length > config.replay.max_codes_per_message) {
         winston.debug('Too many replay codes, ignoring message.');
         return;
     }
 
-    matches.forEach(function (code) {
-        code = code.trim();
-
+    codes.forEach(function (code) {
         const dataPromise = getData(code);
 
         message.channel.send({ embed: createEmbed(code, null) })
