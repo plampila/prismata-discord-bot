@@ -94,7 +94,7 @@ function channelName(channel) {
     if (channel instanceof Discord.TextChannel) {
         return channel.guild.name + ' #' + channel.name;
     } else if (channel instanceof Discord.DMChannel) {
-        return channel.client.tag;
+        return 'DM';
     } else if (channel instanceof Discord.GroupDMChannel) {
         return 'Group DM'; // FIXME
     } else {
@@ -121,7 +121,7 @@ module.exports.handleMessage = function handleMessage(message) {
     }
     updateIgnored(message.channel, units);
 
-    winston.info(channelName(message.channel), 'unit info:', units.join(', '));
+    winston.info(message.author.tag + ' (' + channelName(message.channel) + '):', 'Unit info:', units.join(', '));
 
     units.forEach(unit => {
         message.channel.send({ embed: createEmbed(unit, unitData[unit]) }).catch(e => {
