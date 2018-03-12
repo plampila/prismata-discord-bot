@@ -16,10 +16,10 @@ const playUrl = 'https://play.prismata.net/?r=';
 const codeRegexp = /^[a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5}$/;
 const codeSearchRegexp = /(?:^|\s)([a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5})(?:\s|$)/g;
 const gameTypeFormats = {
-    200: "Ranked",
-    201: "Versus",
-    203: "Event",
-    204: "Casual",
+    200: 'Ranked',
+    201: 'Versus',
+    203: 'Event',
+    204: 'Casual',
 };
 const romanNumeral = [null, 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IIX', 'IX'];
 
@@ -161,7 +161,7 @@ function extractGameData(data) {
                     data.ratingInfo.initialRatings[1].tierPercent,
                     data.ratingInfo.initialRatings[1].displayRating),
             },
-            gameType: gameTypeFormats.hasOwnProperty(data.format) ? gameTypeFormats[data.format] : "Unknown",
+            gameType: gameTypeFormats.hasOwnProperty(data.format) ? gameTypeFormats[data.format] : 'Unknown',
             timeControl: extractTimeControl(data),
             hasBaseSet: data.deckInfo.base[0].length > 0,
             randomUnits: data.deckInfo.randomizer[0],
@@ -272,12 +272,12 @@ module.exports.handleMessage = function handleMessage(message) {
                     })
                     .catch(function (e) {
                         if (e.type) {
-                            winston.error("Failed to get replay data (" + code + "), " + e.type + ":", e.message);
+                            winston.error('Failed to get replay data (' + code + '), ' + e.type + ':', e.message);
                             message.edit({ embed: createEmbed(code, null,
-                                errorMessage[e.type] ? errorMessage[e.type] : "Unknown Error") });
+                                errorMessage[e.type] ? errorMessage[e.type] : 'Unknown Error') });
                         } else {
-                            winston.error("Failed to get replay data (" + code + "):", e);
-                            message.edit({ embed: createEmbed(code, null, "Unknown Error") });
+                            winston.error('Failed to get replay data (' + code + '):', e);
+                            message.edit({ embed: createEmbed(code, null, 'Unknown Error') });
                         }
                     });
             })

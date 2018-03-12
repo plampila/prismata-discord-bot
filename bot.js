@@ -41,18 +41,22 @@ client.on('disconnect', event => {
     process.exit();
 });
 
+client.on('debug', info => {
+    winston.debug('Client:', info);
+});
+
 client.on('warn', info => {
-    winston.warn('Warn:', info);
+    winston.warn('Client:', info);
 });
 
 client.on('error', error => {
-    winston.error('Error:', error);
+    winston.error('Client:', error);
 });
 
 client.login(config.login.token);
 
 process.on('SIGINT', function() {
-    winston.warn("Caught interrupt signal.");
+    winston.warn('Caught interrupt signal.');
     if (client.readyAt != null) {
         client.destroy();
     } else {
