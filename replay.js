@@ -209,7 +209,7 @@ function createEmbed(code, data, errorMessage) {
                 }
             }
             embed.addField(desc, d.randomUnits.join(', '));
-            embed.setFooter(d.startTime.toISOString().replace('T', ' ').replace('\..+', ''));
+            embed.setFooter(d.startTime.toISOString().replace('T', ' ').replace(/:\d\d\..+/, ''));
         }
     }
     return embed;
