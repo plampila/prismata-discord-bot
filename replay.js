@@ -264,7 +264,7 @@ module.exports.handleMessage = function handleMessage(message) {
         match = codeSearchRegexp.exec(message);
     }
     codes = filterIgnored(message.channel, Array.from(new Set(codes)));
-    if (!codes) {
+    if (codes.length === 0) {
         return;
     }
     if (codes.length > config.replay.max_codes_per_message) {
