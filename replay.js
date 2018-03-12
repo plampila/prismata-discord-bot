@@ -10,9 +10,6 @@ const zlib = require('zlib');
 
 const config = toml.parse(fs.readFileSync('bot.toml'));
 
-const cacheDirectory = 'replays';
-const dataUrl = 'http://saved-games-alpha.s3-website-us-east-1.amazonaws.com/';
-const playUrl = 'https://play.prismata.net/?r=';
 const codeRegexp = /^[a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5}$/;
 const codeSearchRegexp = /(?:^|\s)([a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5})(?:\s|$)/g;
 const gameTypeFormats = {
@@ -36,7 +33,7 @@ function loadCachedData(code) {
 
     return new Promise((resolve, reject) => {
         var readData = '';
-        fs.createReadStream(path.join(cacheDirectory, code + '.json.gz'))
+        fs.createReadStream(path.join(config.replay.cache_directory, code + '.json.gz'))
             .on('error', e => {
                 reject(e);
             })
@@ -65,7 +62,7 @@ function getData(code) {
             resolve(data);
         }).catch(e => {
             winston.info('Downloading replay data: ' + code);
-            var request = http.get(dataUrl + encodeURIComponent(code) + '.json.gz', response => {
+            var request = http.get(config.replay.data_url.replace('%CODE%', encodeURIComponent(code)), response => {
                 if (!response || !response.statusCode) {
                     reject({ type: 'NetworkError', message: 'No response object.' });
                     return;
@@ -95,7 +92,7 @@ function getData(code) {
                             return;
                         }
 
-                        var out = fs.createWriteStream(path.join(cacheDirectory, code + '.json.gz'))
+                        var out = fs.createWriteStream(path.join(config.replay.cache_directory, code + '.json.gz'))
                         .on('close', () => {
                             winston.debug('Replay saved to cache: ' + code);
                         })
@@ -179,7 +176,7 @@ function createEmbed(code, data, errorMessage) {
     var embed = new Discord.RichEmbed();
     embed.setColor('BLUE');
     embed.setTitle(code);
-    embed.setURL(playUrl + encodeURIComponent(code));
+    embed.setURL(config.replay.link_url.replace('%CODE%', encodeURIComponent(code)));
     if (errorMessage) {
         embed.setDescription(errorMessage);
     } else if (!data) {
