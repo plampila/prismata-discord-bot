@@ -268,7 +268,9 @@ module.exports.handleMessage = function handleMessage(message) {
             .then(function (message) {
                 dataPromise
                     .then(function (data) {
-                        message.edit({ embed: createEmbed(code, data) });
+                        message.edit({ embed: createEmbed(code, data) }).catch(function (e) {
+                            winston.error('Failed to edit message.', e);
+                        });
                     })
                     .catch(function (e) {
                         if (e.type) {
