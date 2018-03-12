@@ -10,9 +10,6 @@ const config = toml.parse(fs.readFileSync('bot.toml'));
 const unitData = JSON.parse(fs.readFileSync('units.json'));
 const unitAliases = collectUnitAliases();
 
-const imageUrl = 'https://s3.amazonaws.com/lunarch_blog/Units/Random+Set/';
-const linkUrl = 'https://prismata.gamepedia.com/';
-
 var channelIgnores = {};
 
 function collectUnitAliases() {
@@ -54,8 +51,8 @@ function createEmbed(unit, supply) {
     var embed = new Discord.RichEmbed();
     embed.setColor('BLUE');
     embed.setTitle(unit);
-    embed.setURL(linkUrl + encodeURIComponent(unit));
-    embed.setImage(imageUrl + encodeURIComponent(unit) + '.png');
+    embed.setURL(config.unit.link_url.replace('%NAME%', encodeURIComponent(unit)));
+    embed.setImage(config.unit.image_url.replace('%NAME%', encodeURIComponent(unit)));
     embed.setDescription('Supply: ' + supply);
     return embed;
 }
