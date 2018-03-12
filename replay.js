@@ -216,7 +216,7 @@ function createEmbed(code, data, errorMessage) {
 }
 
 function filterIgnored(channel, codes) {
-    const cutoffTime = Date.now() - config.replay.ignore_same_code_time * 1000;
+    const cutoffTime = Date.now() - config.replay.ignore_duplicate_time * 1000;
 
     if (!channelIgnoredCodes.hasOwnProperty(channel)) {
         channelIgnoredCodes[channel] = {};
@@ -267,7 +267,7 @@ module.exports.handleMessage = function handleMessage(message) {
     if (codes.length === 0) {
         return;
     }
-    if (codes.length > config.replay.max_codes_per_message) {
+    if (codes.length > config.replay.max_per_message) {
         winston.debug('Too many replay codes, ignoring message.');
         return;
     }
