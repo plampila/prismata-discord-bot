@@ -55,7 +55,7 @@ client.on('error', error => {
 
 client.login(config.login.token);
 
-process.on('SIGINT', function() {
+process.on('SIGINT', () => {
     winston.warn('Caught interrupt signal.');
     if (client.readyAt != null) {
         client.destroy();

@@ -34,24 +34,24 @@ var channelIgnoredCodes = {};
 function loadCachedData(code) {
     assert(code.match(codeRegexp));
 
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
         var readData = '';
         fs.createReadStream(path.join(cacheDirectory, code + '.json.gz'))
-            .on('error', function (e) {
+            .on('error', e => {
                 reject(e);
             })
         .pipe(zlib.createGunzip())
-            .on('data', function (data) {
+            .on('data', data => {
                 readData += data;
             })
-            .on('end', function () {
+            .on('end', () => {
                 try {
                     resolve(JSON.parse(readData));
                 } catch (e) {
                     reject(e);
                 }
             })
-            .on('error', function (e) {
+            .on('error', e => {
                 reject(e);
             });
     });
@@ -60,12 +60,12 @@ function loadCachedData(code) {
 function getData(code) {
     assert(code.match(codeRegexp));
 
-    return new Promise(function (resolve, reject) {
-        loadCachedData(code).then(function (data) {
+    return new Promise((resolve, reject) => {
+        loadCachedData(code).then(data => {
             resolve(data);
-        }).catch(function (e) {
+        }).catch(e => {
             winston.info('Downloading replay data: ' + code);
-            var request = http.get(dataUrl + encodeURIComponent(code) + '.json.gz', function (response) {
+            var request = http.get(dataUrl + encodeURIComponent(code) + '.json.gz', response => {
                 if (!response || !response.statusCode) {
                     reject({ type: 'NetworkError', message: 'No response object.' });
                     return;
@@ -84,10 +84,10 @@ function getData(code) {
 
                 var readData = '';
                 response.pipe(zlib.createGunzip())
-                    .on('data', function (data) {
+                    .on('data', data => {
                         readData += data;
                     })
-                    .on('end', function () {
+                    .on('end', () => {
                         try {
                             resolve(JSON.parse(readData));
                         } catch (e) {
@@ -96,19 +96,19 @@ function getData(code) {
                         }
 
                         var out = fs.createWriteStream(path.join(cacheDirectory, code + '.json.gz'))
-                        .on('close', function () {
+                        .on('close', () => {
                             winston.debug('Replay saved to cache: ' + code);
                         })
-                        .on('error', function (e) {
+                        .on('error', (e) => {
                             winston.error('Failed to save replay data to cache.', e);
                         });
                         passThrough.pipe(out);
                     })
-                    .on('error', function (e) {
+                    .on('error', (e) => {
                         reject({ type: 'InvalidData', message: e });
                     });
             })
-            .on('error', function (e) {
+            .on('error', (e) => {
                 reject({ type: 'NetworkError', message: e });
             });
         });
@@ -221,13 +221,13 @@ function filterIgnored(channel, codes) {
     if (!channelIgnoredCodes.hasOwnProperty(channel)) {
         channelIgnoredCodes[channel] = {};
     }
-    Object.keys(channelIgnoredCodes[channel]).forEach(function (code) {
+    Object.keys(channelIgnoredCodes[channel]).forEach(code => {
         if (channelIgnoredCodes[channel][code] < cutoffTime) {
             delete channelIgnoredCodes[channel][code];
         }
     });
 
-    return codes.filter(function (code) {
+    return codes.filter(code => {
         return !channelIgnoredCodes[channel].hasOwnProperty(code);
     });
 }
@@ -238,7 +238,7 @@ function updateIgnored(channel, codes) {
     if (!channelIgnoredCodes.hasOwnProperty(channel)) {
         channelIgnoredCodes[channel] = {};
     }
-    codes.forEach(function (code) {
+    codes.forEach(code => {
         channelIgnoredCodes[channel][code] = time;
     });
 }
@@ -275,18 +275,18 @@ module.exports.handleMessage = function handleMessage(message) {
 
     winston.info(channelName(message.channel) + ' replay codes:', codes.join(', '));
 
-    codes.forEach(function (code) {
+    codes.forEach(code => {
         const dataPromise = getData(code);
 
         message.channel.send({ embed: createEmbed(code, null) })
-            .then(function (message) {
+            .then(message => {
                 dataPromise
-                    .then(function (data) {
-                        message.edit({ embed: createEmbed(code, data) }).catch(function (e) {
+                    .then(data => {
+                        message.edit({ embed: createEmbed(code, data) }).catch(e => {
                             winston.error('Failed to edit message.', e);
                         });
                     })
-                    .catch(function (e) {
+                    .catch(e => {
                         if (e.type) {
                             winston.error('Failed to get replay data (' + code + '), ' + e.type + ':', e.message);
                             message.edit({ embed: createEmbed(code, null,
