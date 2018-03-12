@@ -48,12 +48,17 @@ function collectUnitAliases() {
 }
 
 function createEmbed(unit, supply) {
-    var embed = new Discord.RichEmbed();
+    var embed = new Discord.RichEmbed({
+        image: {
+            url: config.unit.image_url.replace('%NAME%', encodeURIComponent(unit)),
+            width: 453,
+            height: 217,
+        },
+    });
     embed.setColor('BLUE');
     embed.setTitle(unit);
     embed.setURL(config.unit.link_url.replace('%NAME%', encodeURIComponent(unit)));
-    embed.setImage(config.unit.image_url.replace('%NAME%', encodeURIComponent(unit)));
-    embed.setDescription('Supply: ' + supply);
+    embed.setFooter('Supply: ' + supply);
     return embed;
 }
 
@@ -106,7 +111,6 @@ module.exports.handleMessage = function handleMessage(message) {
         }
         match = unitSearchRegexp.exec(message.content);
     }
-    console.log(units);
     units = filterIgnored(message.channel, Array.from(new Set(units)));
     if (units.length === 0) {
         return;
