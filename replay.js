@@ -257,11 +257,11 @@ function channelName(channel) {
 
 module.exports.handleMessage = function handleMessage(message) {
     var codes = [];
-    var match = codeSearchRegexp.exec(message);
+    var match = codeSearchRegexp.exec(message.content);
     while (match) {
         codes.push(match[1]);
         codeSearchRegexp.lastIndex--;
-        match = codeSearchRegexp.exec(message);
+        match = codeSearchRegexp.exec(message.content);
     }
     codes = filterIgnored(message.channel, Array.from(new Set(codes)));
     if (codes.length === 0) {
