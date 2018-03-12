@@ -243,6 +243,18 @@ function updateIgnored(channel, codes) {
     });
 }
 
+function channelName(channel) {
+    if (channel instanceof Discord.TextChannel) {
+        return channel.guild.name + ' #' + channel.name;
+    } else if (channel instanceof Discord.DMChannel) {
+        return channel.client.tag;
+    } else if (channel instanceof Discord.GroupDMChannel) {
+        return 'Group DM'; // FIXME
+    } else {
+        return 'Unknown Channel';
+    }
+}
+
 module.exports.handleMessage = function handleMessage(message) {
     var codes = [];
     var match = codeSearchRegexp.exec(message);
@@ -260,6 +272,8 @@ module.exports.handleMessage = function handleMessage(message) {
         return;
     }
     updateIgnored(message.channel, codes);
+
+    winston.info(channelName(message.channel) + ' replay codes:', codes.join(', '));
 
     codes.forEach(function (code) {
         const dataPromise = getData(code);
