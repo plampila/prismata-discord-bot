@@ -4,6 +4,7 @@ const toml = require('toml');
 const winston = require('winston');
 
 const replay = require('./replay');
+const unit = require('./unit');
 
 winston.level = 'debug';
 
@@ -30,6 +31,7 @@ client.on('message', message => {
     }
 
     replay.handleMessage(message);
+    unit.handleMessage(message);
 });
 
 client.on('reconnecting', () => {
