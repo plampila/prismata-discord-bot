@@ -47,18 +47,18 @@ function collectUnitAliases() {
     return aliases;
 }
 
-function createEmbed(unit, supply) {
+function createEmbed(unit) {
     var embed = new Discord.RichEmbed({
         image: {
-            url: config.unit.image_url.replace('%NAME%', encodeURIComponent(unit)),
+            url: config.unit.image_url.replace('%NAME%', encodeURIComponent(unit.name)),
             width: 453,
             height: 217,
         },
     });
     embed.setColor('BLUE');
-    embed.setTitle(unit);
-    embed.setURL(config.unit.link_url.replace('%NAME%', encodeURIComponent(unit)));
-    embed.setFooter('Supply: ' + supply);
+    embed.setTitle(unit.name);
+    embed.setURL(config.unit.link_url.replace('%NAME%', encodeURIComponent(unit.name)));
+    embed.setFooter('Supply: ' + unit.supply);
     return embed;
 }
 
@@ -124,7 +124,7 @@ module.exports.handleMessage = function handleMessage(message) {
     winston.info(message.author.tag + ' (' + channelName(message.channel) + '):', 'Unit info:', units.join(', '));
 
     units.forEach(unit => {
-        message.channel.send({ embed: createEmbed(unit, unitData[unit]) }).catch(e => {
+        message.channel.send({ embed: createEmbed(unitData[unit]) }).catch(e => {
                 winston.error('Failed to send a message.', e);
             });
     });
