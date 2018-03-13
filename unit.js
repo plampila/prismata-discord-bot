@@ -1,14 +1,14 @@
 const assert = require('assert');
 const Discord = require('discord.js');
 const fs = require('fs');
-const toml = require('toml');
 const winston = require('winston');
 
-const unitSearchRegexp = /\[\[([\w ]+)\]\]/g;
+const config = require('./config');
 
-const config = toml.parse(fs.readFileSync('bot.toml'));
 const unitData = JSON.parse(fs.readFileSync('units.json'));
 const unitAliases = collectUnitAliases();
+
+const unitSearchRegexp = /\[\[([\w ]+)\]\]/g;
 
 var channelIgnores = {};
 

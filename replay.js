@@ -4,11 +4,10 @@ const fs = require('fs');
 const http = require('http');
 const PassThrough = require('stream').PassThrough;
 const path = require('path');
-const toml = require('toml');
 const winston = require('winston');
 const zlib = require('zlib');
 
-const config = toml.parse(fs.readFileSync('bot.toml'));
+const config = require('./config');
 
 const codeRegexp = /^[a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5}$/;
 const codeSearchRegexp = /(?:^|\s|(?:[\?\&]r=))([a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5})(?:[\s,\.]|\&\w+|$)/g;

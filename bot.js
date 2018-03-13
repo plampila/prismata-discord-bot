@@ -1,16 +1,13 @@
 const Discord = require('discord.js');
-const fs = require('fs');
-const toml = require('toml');
 const winston = require('winston');
 
+const config = require('./config');
 const replay = require('./replay');
 const unit = require('./unit');
 
 winston.level = 'debug';
 
 winston.info('Launching...');
-
-const config = toml.parse(fs.readFileSync('bot.toml'));
 
 const client = new Discord.Client();
 
