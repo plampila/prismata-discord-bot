@@ -11,7 +11,7 @@ const zlib = require('zlib');
 const config = toml.parse(fs.readFileSync('bot.toml'));
 
 const codeRegexp = /^[a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5}$/;
-const codeSearchRegexp = /(?:^|\s)([a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5})(?:\s|$)/g;
+const codeSearchRegexp = /(?:^|\s|(?:[\?\&]r=))([a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5})(?:[\s,\.]|\&\w+|$)/g;
 const gameTypeFormats = {
     200: 'Ranked',
     201: 'Versus',
