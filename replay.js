@@ -138,7 +138,7 @@ function formatRating(tier, tierPercent, rating) {
     } else if (tier < 1 || tier === 1 && tierPercent === 0) {
         return '-';
     } else {
-        return 'Tier ' + romanNumeral[tier];
+        return 'Tier ' + romanNumeral[tier] + ', ' + Math.floor(tierPercent * 100) + '%';
     }
 }
 
