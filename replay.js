@@ -17,7 +17,7 @@ const gameTypeFormats = {
     203: 'Event',
     204: 'Casual',
 };
-const romanNumeral = [null, 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IIX', 'IX'];
+const romanNumeral = [null, 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
 const errorMessage = {
     'NetworkError': 'Failed to fetch replay data.',
