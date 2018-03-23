@@ -10,6 +10,7 @@ const zlib = require('zlib');
 const config = require('./config');
 
 const codeRegexp = /^[a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5}$/;
+const suspiciousCodeRegExp = /^[a-zA-Z][a-z]{4}-[a-zA-Z][a-z]{4}$/;
 const codeSearchRegexp = /(?:^|[\s\(]|(?:[\?\&]r=))([a-zA-Z0-9@+]{5}-[a-zA-Z0-9@+]{5})(?:[\s,\.\)]|\&\w+|$)/g;
 const gameTypeFormats = {
     200: 'Ranked',
@@ -281,21 +282,28 @@ module.exports.handleMessage = function handleMessage(message) {
         const dataPromise = getData(code);
 
         message.channel.send({ embed: createEmbed(code, null) })
-            .then(message => {
+            .then(sentMessage => {
                 dataPromise
                     .then(data => {
-                        message.edit({ embed: createEmbed(code, data) }).catch(e => {
+                        sentMessage.edit({ embed: createEmbed(code, data) }).catch(e => {
                             winston.error('Failed to edit message.', e);
                         });
                     })
                     .catch(e => {
                         if (e.type) {
                             winston.error('Failed to get replay data (' + code + '), ' + e.type + ':', e.message);
-                            message.edit({ embed: createEmbed(code, null,
-                                errorMessage[e.type] ? errorMessage[e.type] : 'Unknown Error') });
+                            if (code.match(suspiciousCodeRegExp) && e.type === 'NotFound') {
+                                winston.info('Hiding reply to suspicious code: ' + code);
+                                sentMessage.delete().catch(e => {
+                                    winston.error('Failed to delete message.', e);
+                                });
+                            } else {
+                                sentMessage.edit({ embed: createEmbed(code, null,
+                                    errorMessage[e.type] ? errorMessage[e.type] : 'Unknown Error') });
+                            }
                         } else {
                             winston.error('Failed to get replay data (' + code + '):', e);
-                            message.edit({ embed: createEmbed(code, null, 'Unknown Error') });
+                            sentMessage.edit({ embed: createEmbed(code, null, 'Unknown Error') });
                         }
                     });
             })
