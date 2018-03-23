@@ -252,10 +252,16 @@ function channelName(channel) {
 }
 
 module.exports.handleMessage = function handleMessage(message) {
+    function hasIgnoredWord(text) {
+        return config.replay.ignored_words.some(x => text.indexOf(x) !== -1);
+    }
+
     var codes = [];
     var match = codeSearchRegexp.exec(message.content);
     while (match) {
-        codes.push(match[1]);
+        if (!hasIgnoredWord(match[1])) {
+            codes.push(match[1]);
+        }
         codeSearchRegexp.lastIndex--;
         match = codeSearchRegexp.exec(message.content);
     }

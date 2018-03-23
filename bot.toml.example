@@ -7,6 +7,7 @@ link_url="https://play.prismata.net/?r=%CODE%"
 cache_directory="replays/"
 max_per_message=3
 ignore_duplicate_time=60
+ignored_words=[]
 
 [unit]
 image_url="https://s3.amazonaws.com/lunarch_blog/Units/Random+Set/%NAME%.png"
