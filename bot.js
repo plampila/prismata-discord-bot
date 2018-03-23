@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const winston = require('winston');
+const npid = require('npid');
 
 const config = require('./config');
 const replay = require('./replay');
@@ -8,6 +9,17 @@ const unit = require('./unit');
 winston.level = 'debug';
 
 winston.info('Launching...');
+
+if (config.bot.pid_file) {
+    winston.info('Creating PID file: ' + config.bot.pid_file);
+    try {
+        var pid = npid.create(config.bot.pid_file);
+        pid.removeOnExit();
+    } catch (e) {
+        winston.error(e);
+        process.exit(1);
+    }
+}
 
 const client = new Discord.Client();
 
@@ -52,7 +64,7 @@ client.on('error', error => {
     winston.error('Client:', error);
 });
 
-client.login(config.login.token);
+client.login(config.bot.login_token);
 
 process.on('SIGINT', () => {
     winston.warn('Caught interrupt signal.');

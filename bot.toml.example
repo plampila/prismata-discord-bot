@@ -1,5 +1,6 @@
-[login]
-token="<bot token>"
+[bot]
+pid_file="bot.pid"
+login_token="<bot token>"
 
 [replay]
 data_url="http://saved-games-alpha.s3-website-us-east-1.amazonaws.com/%CODE%.json.gz"

@@ -5,6 +5,7 @@
   "main": "bot.js",
   "dependencies": {
     "discord.js": "^11.3.2",
+    "npid": "^0.4.0",
     "toml": "^2.3.3",
     "winston": "^2.4.0"
   },
