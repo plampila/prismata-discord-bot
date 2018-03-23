@@ -299,11 +299,15 @@ module.exports.handleMessage = function handleMessage(message) {
                                 });
                             } else {
                                 sentMessage.edit({ embed: createEmbed(code, null,
-                                    errorMessage[e.type] ? errorMessage[e.type] : 'Unknown Error') });
+                                    errorMessage[e.type] ? errorMessage[e.type] : 'Unknown Error') }).catch(e => {
+                                        winston.error('Failed to edit message.', e);
+                                    });
                             }
                         } else {
                             winston.error('Failed to get replay data (' + code + '):', e);
-                            sentMessage.edit({ embed: createEmbed(code, null, 'Unknown Error') });
+                            sentMessage.edit({ embed: createEmbed(code, null, 'Unknown Error') }).catch(e => {
+                                winston.error('Failed to edit message.', e);
+                            });
                         }
                     });
             })
