@@ -23,8 +23,8 @@ client.on('message', message => {
         winston.info('Private message from ' + message.author.tag + ': ' + message.content);
         if (message.content === 'ping') {
             message.reply('pong');
+            return;
         }
-        return;
     }
 
     replay.handleMessage(message);
