@@ -106,20 +106,23 @@ module.exports.handleMessage = function handleMessage(message) {
     var units = [];
     var match = unitSearchRegexp.exec(message.content);
     while (match) {
-        if (unitAliases[match[1].toUpperCase()]) {
+        if (unitAliases[match[1].toUpperCase()] && !units.includes(unitAliases[match[1].toUpperCase()])) {
             units.push(unitAliases[match[1].toUpperCase()]);
         }
         match = unitSearchRegexp.exec(message.content);
     }
-    units = filterIgnored(message.channel, Array.from(new Set(units)));
-    if (units.length === 0) {
-        return;
+
+    if (!(channel instanceof Discord.DMChannel)) {
+        units = filterIgnored(message.channel, units);
+        if (units.length === 0) {
+            return;
+        }
+        if (units.length > config.unit.max_per_message) {
+            winston.debug('Too many units, ignoring message.');
+            return;
+        }
+        updateIgnored(message.channel, units);
     }
-    if (units.length > config.unit.max_per_message) {
-        winston.debug('Too many units, ignoring message.');
-        return;
-    }
-    updateIgnored(message.channel, units);
 
     winston.info(message.author.tag + ' (' + channelName(message.channel) + '):', 'Unit info:', units.join(', '));
 

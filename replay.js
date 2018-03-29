@@ -260,13 +260,16 @@ module.exports.handleMessage = function handleMessage(message) {
     var codes = [];
     var match = codeSearchRegexp.exec(message.content);
     while (match) {
-        if (!hasIgnoredWord(match[1])) {
+        if (!codes.includes(match[1]) && !hasIgnoredWord(match[1])) {
             codes.push(match[1]);
         }
         codeSearchRegexp.lastIndex--;
         match = codeSearchRegexp.exec(message.content);
     }
-    codes = filterIgnored(message.channel, Array.from(new Set(codes)));
+
+    if (!(message.channel instanceof Discord.DMChannel)) {
+        codes = filterIgnored(message.channel, codes);
+    }
     if (codes.length === 0) {
         return;
     }
@@ -274,7 +277,9 @@ module.exports.handleMessage = function handleMessage(message) {
         winston.debug('Too many replay codes, ignoring message.');
         return;
     }
-    updateIgnored(message.channel, codes);
+    if (!(message.channel instanceof Discord.DMChannel)) {
+        updateIgnored(message.channel, codes);
+    }
 
     winston.info(message.author.tag + ' (' + channelName(message.channel) + '):', 'Replay codes:', codes.join(', '));
 
