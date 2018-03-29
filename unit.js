@@ -102,25 +102,55 @@ function channelName(channel) {
     }
 }
 
-module.exports.handleMessage = function handleMessage(message) {
+function searchAll(content) {
     var units = [];
-    var match = unitSearchRegexp.exec(message.content);
+    const parts = content.split(' ');
+    for (var i = 0; i < parts.length; i++) {
+        var str = parts[i].toUpperCase();
+        for (var j = 0; j < 3 && i + j < parts.length; j++) {
+            if (j > 0) {
+                str += ' ' + parts[i + j].toUpperCase();
+            }
+            if (unitAliases[str] && !units.includes(unitAliases[str])) {
+                units.push(unitAliases[str]);
+                break;
+            }
+        }
+    }
+    return units;
+}
+
+function searchTagged(content) {
+    var units = [];
+    var match = unitSearchRegexp.exec(content);
     while (match) {
         if (unitAliases[match[1].toUpperCase()] && !units.includes(unitAliases[match[1].toUpperCase()])) {
             units.push(unitAliases[match[1].toUpperCase()]);
         }
-        match = unitSearchRegexp.exec(message.content);
+        match = unitSearchRegexp.exec(content);
     }
+    return units;
+}
 
-    if (!(channel instanceof Discord.DMChannel)) {
-        units = filterIgnored(message.channel, units);
+module.exports.handleMessage = function handleMessage(message) {
+    var units;
+
+    if (message.channel instanceof Discord.DMChannel) {
+        units = searchAll(message.content);
         if (units.length === 0) {
-            return;
+            units = searchTagged(message.content);
         }
-        if (units.length > config.unit.max_per_message) {
-            winston.debug('Too many units, ignoring message.');
-            return;
-        }
+    } else {
+        units = filterIgnored(message.channel, searchTagged(message.content));
+    }
+    if (units.length === 0) {
+        return;
+    }
+    if (units.length > config.unit.max_per_message) {
+        winston.debug('Too many units, ignoring message.');
+        return;
+    }
+    if (!(message.channel instanceof Discord.DMChannel)) {
         updateIgnored(message.channel, units);
     }
 
