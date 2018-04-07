@@ -179,7 +179,7 @@ function createEmbed(code, data, errorMessage) {
     var embed = new Discord.RichEmbed();
     embed.setColor('BLUE');
     embed.setTitle(code);
-    embed.setURL(config.replay.link_url.replace('%CODE%', encodeURIComponent(code)));
+    embed.setURL(config.replay.link_url.replace('%CODE%', code));
     if (errorMessage) {
         embed.setDescription(errorMessage);
     } else if (!data) {
