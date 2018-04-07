@@ -117,7 +117,10 @@ function extractTimeControl(data) {
         return 0;
     }
 
-    var time = data.timeInfo.playerTime[0].initial;
+    var time = data.timeInfo.playerTime[data.playerInfo[0].bot ? 1 : 0].initial;
+    if (time === 1000000) {
+        return 0;
+    }
 
     for (var i = 0; i < 2; i++) {
         if (data.playerInfo[i].bot) {
