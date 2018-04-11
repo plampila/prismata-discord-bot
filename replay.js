@@ -21,23 +21,23 @@ const gameTypeFormats = {
 const romanNumeral = [null, 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
 const errorMessage = {
-    'NetworkError': 'Failed to fetch replay data.',
-    'NotFound': 'Replay data not found.',
-    'InvalidData': 'Failed to parse replay data.',
+    NetworkError: 'Failed to fetch replay data.',
+    NotFound: 'Replay data not found.',
+    InvalidData: 'Failed to parse replay data.',
 };
 
-var channelIgnoredCodes = {};
+const channelIgnoredCodes = {};
 
 function loadCachedData(code) {
     assert(code.match(codeRegexp));
 
     return new Promise((resolve, reject) => {
-        var readData = '';
-        fs.createReadStream(path.join(config.replay.cache_directory, code + '.json.gz'))
+        let readData = '';
+        fs.createReadStream(path.join(config.replay.cache_directory, `${code}.json.gz`))
             .on('error', e => {
                 reject(e);
             })
-        .pipe(zlib.createGunzip())
+            .pipe(zlib.createGunzip())
             .on('data', data => {
                 readData += data;
             })
@@ -60,26 +60,26 @@ function getData(code) {
     return new Promise((resolve, reject) => {
         loadCachedData(code).then(data => {
             resolve(data);
-        }).catch(e => {
-            winston.info('Downloading replay data: ' + code);
-            var request = http.get(config.replay.data_url.replace('%CODE%', encodeURIComponent(code)), response => {
+        }).catch(() => {
+            winston.info(`Downloading replay data: ${code}`);
+            http.get(config.replay.data_url.replace('%CODE%', encodeURIComponent(code)), response => {
                 if (!response || !response.statusCode) {
                     reject({ type: 'NetworkError', message: 'No response object.' });
                     return;
                 }
                 if (response.statusCode < 200 || response.statusCode >= 300) {
                     if (response.statusCode === 404) {
-                        reject({ type: 'NotFound', message: 'Unexpected HTTP status code: ' + response.statusCode });
+                        reject({ type: 'NotFound', message: `Unexpected HTTP status code: ${response.statusCode}` });
                     } else {
-                        reject({ type: 'NetworkError', message: 'Unexpected HTTP status code: ' + response.statusCode });
+                        reject({ type: 'NetworkError', message: `Unexpected HTTP status code: ${response.statusCode}` });
                     }
                     return;
                 }
 
-                var passThrough = PassThrough();
+                const passThrough = PassThrough();
                 response.pipe(passThrough);
 
-                var readData = '';
+                let readData = '';
                 response.pipe(zlib.createGunzip())
                     .on('data', data => {
                         readData += data;
@@ -92,20 +92,19 @@ function getData(code) {
                             return;
                         }
 
-                        var out = fs.createWriteStream(path.join(config.replay.cache_directory, code + '.json.gz'))
-                        .on('close', () => {
-                            winston.debug('Replay saved to cache: ' + code);
-                        })
-                        .on('error', (e) => {
-                            winston.error('Failed to save replay data to cache.', e);
-                        });
+                        const out = fs.createWriteStream(path.join(config.replay.cache_directory, `${code}.json.gz`))
+                            .on('close', () => {
+                                winston.debug(`Replay saved to cache: ${code}`);
+                            })
+                            .on('error', (e) => {
+                                winston.error('Failed to save replay data to cache.', e);
+                            });
                         passThrough.pipe(out);
                     })
                     .on('error', (e) => {
                         reject({ type: 'InvalidData', message: e });
                     });
-            })
-            .on('error', (e) => {
+            }).on('error', (e) => {
                 reject({ type: 'NetworkError', message: e });
             });
         });
@@ -117,12 +116,12 @@ function extractTimeControl(data) {
         return 0;
     }
 
-    var time = data.timeInfo.playerTime[data.playerInfo[0].bot ? 1 : 0].initial;
+    const time = data.timeInfo.playerTime[data.playerInfo[0].bot ? 1 : 0].initial;
     if (time === 1000000) {
         return 0;
     }
 
-    for (var i = 0; i < 2; i++) {
+    for (let i = 0; i < 2; i++) {
         if (data.playerInfo[i].bot) {
             continue;
         }
@@ -141,9 +140,8 @@ function formatRating(tier, tierPercent, rating) {
         return Math.round(rating);
     } else if (tier < 1 || tier === 1 && tierPercent === 0) {
         return '-';
-    } else {
-        return 'Tier ' + romanNumeral[tier] + ', ' + Math.floor(tierPercent * 100) + '%';
     }
+    return `Tier ${romanNumeral[tier]}, ${Math.floor(tierPercent * 100)}%`;
 }
 
 function extractGameData(data) {
@@ -173,29 +171,29 @@ function extractGameData(data) {
     }
 }
 
-function createEmbed(code, data, errorMessage) {
+function createEmbed(code, data, error) {
     assert(code.match(codeRegexp));
 
-    var embed = new Discord.RichEmbed();
+    const embed = new Discord.RichEmbed();
     embed.setColor('BLUE');
     embed.setTitle(code);
     embed.setURL(config.replay.link_url.replace('%CODE%', code));
-    if (errorMessage) {
-        embed.setDescription(errorMessage);
+    if (error) {
+        embed.setDescription(error);
     } else if (!data) {
         embed.setDescription('...');
     } else {
-        var d = extractGameData(data);
+        const d = extractGameData(data);
         if (!d) {
             embed.setDescription('Failed to parse replay data.');
         } else {
             embed.addField(d.p1.name, d.p1.rating, true);
             embed.addField(d.p2.name, d.p2.rating, true);
-            var desc = d.gameType;
+            let desc = d.gameType;
             if (d.timeControl === 0) {
                 desc += ', No Timelimit';
             } else if (d.timeControl > 0) {
-                desc += ', ' + d.timeControl + 's';
+                desc += `, ${d.timeControl}s`;
             } else {
                 desc += ', Custom Timelimit';
             }
@@ -205,7 +203,7 @@ function createEmbed(code, data, errorMessage) {
                 if(d.randomUnits.length === 0) {
                     desc += ', Base Set Only';
                 } else {
-                    desc += ', Base+' + d.randomUnits.length;
+                    desc += `, Base+${d.randomUnits.length}`;
                 }
             }
             embed.addField(desc, d.randomUnits.join(', '));
@@ -245,14 +243,13 @@ function updateIgnored(channel, codes) {
 
 function channelName(channel) {
     if (channel instanceof Discord.TextChannel) {
-        return channel.guild.name + ' #' + channel.name;
+        return `${channel.guild.name} #${channel.name}`;
     } else if (channel instanceof Discord.DMChannel) {
         return 'DM';
     } else if (channel instanceof Discord.GroupDMChannel) {
         return 'Group DM'; // FIXME
-    } else {
-        return 'Unknown Channel';
     }
+    return 'Unknown Channel';
 }
 
 module.exports.handleMessage = function handleMessage(message) {
@@ -260,8 +257,8 @@ module.exports.handleMessage = function handleMessage(message) {
         return config.replay.ignored_words.some(x => text.indexOf(x) !== -1);
     }
 
-    var codes = [];
-    var match = codeSearchRegexp.exec(message.content);
+    let codes = [];
+    let match = codeSearchRegexp.exec(message.content);
     while (match) {
         if (!codes.includes(match[1]) && !hasIgnoredWord(match[1])) {
             codes.push(match[1]);
@@ -284,7 +281,7 @@ module.exports.handleMessage = function handleMessage(message) {
         updateIgnored(message.channel, codes);
     }
 
-    winston.info(message.author.tag + ' (' + channelName(message.channel) + '):', 'Replay codes:', codes.join(', '));
+    winston.info(`${message.author.tag} (${channelName(message.channel)}):`, 'Replay codes:', codes.join(', '));
 
     codes.forEach(code => {
         const dataPromise = getData(code);
@@ -299,22 +296,22 @@ module.exports.handleMessage = function handleMessage(message) {
                     })
                     .catch(e => {
                         if (e.type) {
-                            winston.error('Failed to get replay data (' + code + '), ' + e.type + ':', e.message);
+                            winston.error(`Failed to get replay data (${code}), ${e.type}:`, e.message);
                             if (code.match(suspiciousCodeRegExp) && e.type === 'NotFound') {
-                                winston.info('Hiding reply to suspicious code: ' + code);
-                                sentMessage.delete().catch(e => {
-                                    winston.error('Failed to delete message.', e);
+                                winston.info(`Hiding reply to suspicious code: ${code}`);
+                                sentMessage.delete().catch(error => {
+                                    winston.error('Failed to delete message.', error);
                                 });
                             } else {
                                 sentMessage.edit({ embed: createEmbed(code, null,
-                                    errorMessage[e.type] ? errorMessage[e.type] : 'Unknown Error') }).catch(e => {
-                                        winston.error('Failed to edit message.', e);
-                                    });
+                                    errorMessage[e.type] ? errorMessage[e.type] : 'Unknown Error') }).catch(error => {
+                                    winston.error('Failed to edit message.', error);
+                                });
                             }
                         } else {
-                            winston.error('Failed to get replay data (' + code + '):', e);
-                            sentMessage.edit({ embed: createEmbed(code, null, 'Unknown Error') }).catch(e => {
-                                winston.error('Failed to edit message.', e);
+                            winston.error(`Failed to get replay data (${code}):`, e);
+                            sentMessage.edit({ embed: createEmbed(code, null, 'Unknown Error') }).catch(error => {
+                                winston.error('Failed to edit message.', error);
                             });
                         }
                     });

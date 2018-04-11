@@ -11,9 +11,9 @@ winston.level = 'debug';
 winston.info('Launching...');
 
 if (config.bot.pid_file) {
-    winston.info('Creating PID file: ' + config.bot.pid_file);
+    winston.info(`Creating PID file: ${config.bot.pid_file}`);
     try {
-        var pid = npid.create(config.bot.pid_file);
+        const pid = npid.create(config.bot.pid_file);
         pid.removeOnExit();
     } catch (e) {
         winston.error(e);
@@ -32,7 +32,7 @@ client.on('message', message => {
         return;
     }
     if (message.channel instanceof Discord.DMChannel) {
-        winston.info('Private message from ' + message.author.tag + ': ' + message.content);
+        winston.info(`Private message from ${message.author.tag}: ${message.content}`);
         if (message.content === 'ping') {
             message.reply('pong');
             return;
@@ -47,7 +47,7 @@ client.on('reconnecting', () => {
     winston.info('Reconnecting.');
 });
 
-client.on('disconnect', event => {
+client.on('disconnect', () => {
     winston.info('Disconnected. Shutting down.');
     process.exit();
 });
@@ -68,7 +68,7 @@ client.login(config.bot.login_token);
 
 process.on('SIGINT', () => {
     winston.warn('Caught interrupt signal.');
-    if (client.readyAt != null) {
+    if (client.readyAt !== undefined && client.readyAt !== null) {
         client.destroy();
     } else {
         process.exit();

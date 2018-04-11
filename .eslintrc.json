@@ -1,0 +1,29 @@
+{
+    "env": {
+        "es6": true,
+        "node": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "sourceType": "module"
+    },
+    "rules": {
+        "indent": ["error", 4],
+        "no-trailing-spaces": "error",
+        "linebreak-style": ["error", "unix"],
+        "quotes": ["error", "single"],
+        "semi": ["error", "always"],
+        "no-useless-escape": "off",
+        "no-var": "error",
+        "prefer-const": "error",
+        "eqeqeq": "error",
+        "prefer-template": "error",
+        "template-curly-spacing": "error",
+        "no-useless-concat": "error",
+        "no-template-curly-in-string": "error",
+        "template-curly-spacing": "error",
+        "quote-props": ["error", "as-needed"],
+        "no-else-return": "error",
+        "no-shadow": "error"
+    }
+}

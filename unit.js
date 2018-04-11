@@ -1,4 +1,3 @@
-const assert = require('assert');
 const Discord = require('discord.js');
 const fs = require('fs');
 const winston = require('winston');
@@ -10,10 +9,10 @@ const unitAliases = collectUnitAliases();
 
 const unitSearchRegexp = /\[\[([\w ]+)\]\]/g;
 
-var channelIgnores = {};
+const channelIgnores = {};
 
 function collectUnitAliases() {
-    var aliases = {};
+    const aliases = {};
 
     Object.keys(unitData).forEach(unit => {
         aliases[unit.toUpperCase()] = unit;
@@ -48,7 +47,7 @@ function collectUnitAliases() {
 }
 
 function createEmbed(unit) {
-    var embed = new Discord.RichEmbed({
+    const embed = new Discord.RichEmbed({
         image: {
             url: config.unit.image_url.replace('%NAME%', encodeURIComponent(unit.name)),
             width: 453,
@@ -58,7 +57,7 @@ function createEmbed(unit) {
     embed.setColor('BLUE');
     embed.setTitle(unit.name);
     embed.setURL(config.unit.link_url.replace('%NAME%', encodeURIComponent(unit.name)));
-    embed.setFooter('Supply: ' + unit.supply);
+    embed.setFooter(`Supply: ${unit.supply}`);
     return embed;
 }
 
@@ -92,24 +91,23 @@ function updateIgnored(channel, codes) {
 
 function channelName(channel) {
     if (channel instanceof Discord.TextChannel) {
-        return channel.guild.name + ' #' + channel.name;
+        return `${channel.guild.name} #${channel.name}`;
     } else if (channel instanceof Discord.DMChannel) {
         return 'DM';
     } else if (channel instanceof Discord.GroupDMChannel) {
         return 'Group DM'; // FIXME
-    } else {
-        return 'Unknown Channel';
     }
+    return 'Unknown Channel';
 }
 
 function searchAll(content) {
-    var units = [];
+    const units = [];
     const parts = content.split(' ');
-    for (var i = 0; i < parts.length; i++) {
-        var str = parts[i].toUpperCase();
-        for (var j = 0; j < 3 && i + j < parts.length; j++) {
+    for (let i = 0; i < parts.length; i++) {
+        let str = parts[i].toUpperCase();
+        for (let j = 0; j < 3 && i + j < parts.length; j++) {
             if (j > 0) {
-                str += ' ' + parts[i + j].toUpperCase();
+                str += ` ${parts[i + j].toUpperCase()}`;
             }
             if (unitAliases[str] && !units.includes(unitAliases[str])) {
                 units.push(unitAliases[str]);
@@ -121,8 +119,8 @@ function searchAll(content) {
 }
 
 function searchTagged(content) {
-    var units = [];
-    var match = unitSearchRegexp.exec(content);
+    const units = [];
+    let match = unitSearchRegexp.exec(content);
     while (match) {
         if (unitAliases[match[1].toUpperCase()] && !units.includes(unitAliases[match[1].toUpperCase()])) {
             units.push(unitAliases[match[1].toUpperCase()]);
@@ -133,7 +131,7 @@ function searchTagged(content) {
 }
 
 module.exports.handleMessage = function handleMessage(message) {
-    var units;
+    let units;
 
     if (message.channel instanceof Discord.DMChannel) {
         units = searchAll(message.content);
@@ -154,11 +152,11 @@ module.exports.handleMessage = function handleMessage(message) {
         updateIgnored(message.channel, units);
     }
 
-    winston.info(message.author.tag + ' (' + channelName(message.channel) + '):', 'Unit info:', units.join(', '));
+    winston.info(`${message.author.tag} (${channelName(message.channel)}):`, 'Unit info:', units.join(', '));
 
     units.forEach(unit => {
         message.channel.send({ embed: createEmbed(unitData[unit]) }).catch(e => {
-                winston.error('Failed to send a message.', e);
-            });
+            winston.error('Failed to send a message.', e);
+        });
     });
 };
