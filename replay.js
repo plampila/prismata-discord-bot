@@ -15,6 +15,7 @@ const codeSearchRegexp = /(?:^|[\s\(]|(?:[\?\&]r=))([a-zA-Z0-9@+]{5}-[a-zA-Z0-9@
 const gameTypeFormats = {
     200: 'Ranked',
     201: 'Versus',
+    202: 'Versus',
     203: 'Event',
     204: 'Casual',
 };
