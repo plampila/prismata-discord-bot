@@ -150,12 +150,14 @@ function extractGameData(data) {
         return {
             p1: {
                 name: data.playerInfo[0].displayName,
+                bot: data.playerInfo[0].hasOwnProperty('bot') && data.playerInfo[0].bot !== '',
                 rating: formatRating(data.ratingInfo.initialRatings[0].tier,
                     data.ratingInfo.initialRatings[0].tierPercent,
                     data.ratingInfo.initialRatings[0].displayRating),
             },
             p2: {
                 name: data.playerInfo[1].displayName,
+                bot: data.playerInfo[1].hasOwnProperty('bot') && data.playerInfo[1].bot !== '',
                 rating: formatRating(data.ratingInfo.initialRatings[1].tier,
                     data.ratingInfo.initialRatings[1].tierPercent,
                     data.ratingInfo.initialRatings[1].displayRating),
@@ -188,8 +190,8 @@ function createEmbed(code, data, error) {
         if (!d) {
             embed.setDescription('Failed to parse replay data.');
         } else {
-            embed.addField(d.p1.name, d.p1.rating, true);
-            embed.addField(d.p2.name, d.p2.rating, true);
+            embed.addField(d.p1.name, d.p1.bot ? 'AI' : d.p1.rating, true);
+            embed.addField(d.p2.name, d.p2.bot ? 'AI' : d.p2.rating, true);
             let desc = d.gameType;
             if (d.timeControl === 0) {
                 desc += ', No Timelimit';
